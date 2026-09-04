@@ -1,48 +1,59 @@
--- Question 1
+-- Q1. Completed trips with rider and driver names
 SELECT
     t.trip_id,
-    t.rider_name,
+    r.rider_name,
     d.driver_name,
     t.city,
     t.fare
 FROM trips t
+JOIN riders r
+    ON t.rider_id = r.rider_id
 JOIN drivers d
     ON t.driver_id = d.driver_id
 WHERE t.status = 'Completed';
 
--- Question 2
+-- Q2. All Lagos trips
 SELECT
-    t.trip_id,
-    t.rider_name,
+    r.rider_name,
     d.driver_name,
-    t.city,
+    d.vehicle_type,
     t.fare
 FROM trips t
+JOIN riders r
+    ON t.rider_id = r.rider_id
 JOIN drivers d
     ON t.driver_id = d.driver_id
 WHERE t.city = 'Lagos';
 
--- Question 3
+-- Q3. Most valuable riders by total spend
 SELECT
-    rider_name,
-    SUM(fare) AS total_spend
-FROM trips
-WHERE status = 'completed'
-GROUP BY rider_name
+    r.rider_id,
+    r.rider_name,
+    SUM(t.fare) AS total_spend
+FROM riders r
+JOIN trips t
+    ON r.rider_id = t.rider_id
+WHERE t.status = 'Completed'
+GROUP BY
+    r.rider_id,
+    r.rider_name
 ORDER BY total_spend DESC;
 
--- Question 4
-SELECT 
-	d.driver_name,
+-- Q4. Driver scorecard
+SELECT
+    d.driver_id,
+    d.driver_name,
     COUNT(t.trip_id) AS completed_trips,
     AVG(t.rating) AS average_rating
-FROM trips t
-JOIN drivers d
-    ON t.driver_id = d.driver_id
-WHERE t.status = 'Completed'
-GROUP BY d.driver_id, d.driver_name;
+FROM drivers d
+LEFT JOIN trips t
+    ON d.driver_id = t.driver_id
+    AND t.status = 'Completed'
+GROUP BY
+    d.driver_id,
+    d.driver_name;
 
--- Question 5
+-- Q5. Trips costing more than the average completed fare
 SELECT *
 FROM trips
 WHERE status = 'Completed'
@@ -52,59 +63,64 @@ WHERE status = 'Completed'
       WHERE status = 'Completed'
   );
 
--- Question 6
+-- Q6. Drivers who have never had a cancelled trip
 SELECT
-	d.driver_name
-FROM drivers d
-WHERE NOT EXISTS(
-	SELECT 1
-    FROM trips t
-    WHERE t.driver_id = d.driver_id
-		AND t.status = 'Cancelled'
-);
-
--- Question 7
-SELECT
-	d.driver_name,
-    t.fare
-FROM drivers d
-JOIN trips t
-	ON t.driver_id = d.driver_id
-WHERE t.fare = (
-	SELECT MAX(fare)
-    FROM trips
-); 
-
--- Question 8
-SELECT
-    d.driver_name,
-    COUNT(t.trip_id) AS trip_count
-FROM drivers d
-JOIN trips t
-    ON d.driver_id = t.driver_id
-GROUP BY
     d.driver_id,
     d.driver_name
+FROM drivers d
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM trips t
+    WHERE t.driver_id = d.driver_id
+      AND t.status = 'Cancelled'
+);
+
+-- Q7. Rider who took the most expensive trip
+SELECT
+    r.rider_name,
+    t.trip_id,
+    t.fare
+FROM trips t
+JOIN riders r
+    ON t.rider_id = r.rider_id
+WHERE t.fare = (
+    SELECT MAX(fare)
+    FROM trips
+);
+
+-- Q8. Riders who have taken more trips than Chioma Bello
+SELECT
+    r.rider_name,
+    COUNT(t.trip_id) AS trip_count
+FROM riders r
+JOIN trips t
+    ON r.rider_id = t.rider_id
+GROUP BY
+    r.rider_id,
+    r.rider_name
 HAVING COUNT(t.trip_id) > (
     SELECT COUNT(t2.trip_id)
     FROM trips t2
-    JOIN drivers d2
-        ON t2.driver_id = d2.driver_id
-    WHERE d2.driver_name = 'Chioma Bello'
+    JOIN riders r2
+        ON t2.rider_id = r2.rider_id
+    WHERE r2.rider_name = 'Chioma Bello'
 );
 
--- Question 9
+-- Q9. Riders who have given at least one 5-star rating
 SELECT DISTINCT
-    rider_name
-FROM trips
-WHERE rating = 5;
+    r.rider_id,
+    r.rider_name
+FROM riders r
+JOIN trips t
+    ON r.rider_id = t.rider_id
+WHERE t.rating = 5.0;
 
--- Question 10
+-- Q10. Combined rider and driver contact list
 SELECT
     rider_name AS name,
     city,
     'Rider' AS role
-FROM trips
+FROM riders
 UNION ALL
 SELECT
     driver_name AS name,
@@ -112,21 +128,25 @@ SELECT
     'Driver' AS role
 FROM drivers;
 
--- Question 11
+-- Q11. Every city QuickRide operates in
+
 SELECT city
 FROM trips
 UNION
 SELECT home_city
 FROM drivers;
 
--- Question 12
-SELECT	
-	d.driver_name,
-    SUM(t.fare) as total_earnings
+-- Q12. Driver who has earned the most money
+SELECT
+    d.driver_name,
+    SUM(t.fare) AS total_earnings
 FROM drivers d
 JOIN trips t
-	ON t.driver_id = d.driver_id
-WHERE t.status = 'completed'
-GROUP BY d.driver_id
+    ON d.driver_id = t.driver_id
+WHERE t.status = 'Completed'
+GROUP BY
+    d.driver_id,
+    d.driver_name
 ORDER BY total_earnings DESC
 LIMIT 1;
+

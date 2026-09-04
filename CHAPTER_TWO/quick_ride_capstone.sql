@@ -129,7 +129,6 @@ SELECT
 FROM drivers;
 
 -- Q11. Every city QuickRide operates in
-
 SELECT city
 FROM trips
 UNION
@@ -150,3 +149,8 @@ GROUP BY
 ORDER BY total_earnings DESC
 LIMIT 1;
 
+-- QuickRide should give high-performing drivers like Bola Ogun incentives 
+-- to stay active and reward consistently strong performance.
+
+-- management should investigate why cancellations are happening and focus on reducing them, 
+-- because every cancelled trip is a missed ride and a missed opportunity to earn revenue.
